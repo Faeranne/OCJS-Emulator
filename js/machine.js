@@ -12,22 +12,6 @@ let MachineLoader = function(){
   
   this.machine = {};
 	window.computer = this.machine;
-  
-  let componentAdd = document.createElement('div');
-  componentAdd.id = "addComponentList";
-  document.body.appendChild(componentAdd);
-  let bootButton = document.createElement("button");
-  bootButton.id="bootButton";
-	bootButton.innerText = "Power";
-  componentAdd.appendChild(bootButton);
-  let saveButton = document.createElement("button");
-  saveButton.id="saveButton";
-  saveButton.innerText = "Save Current Config";
-  componentAdd.appendChild(saveButton);
-  let loadButton = document.createElement("button");
-  loadButton.id="saveButton";
-  loadButton.innerText = "Load Existing Config";
-  componentAdd.appendChild(loadButton);
 
   this.saveConfig = function(){
     let componentsToStore = [];
@@ -45,8 +29,6 @@ let MachineLoader = function(){
     localStorage.setItem("defaultConfig",JSON.stringify(componentsToStore));
   }
 
-  saveButton.onclick = this.saveConfig;
-
   this.loadConfig = function(){
     let componentsToRestore = JSON.parse(localStorage.getItem("defaultConfig"));
     console.log(componentsToRestore);
@@ -61,8 +43,6 @@ let MachineLoader = function(){
       }
     }
   }
-
-  loadButton.onclick = this.loadConfig;
 
   var dec2string = function(arr){
     string = ""
@@ -85,8 +65,8 @@ let MachineLoader = function(){
 		}
 		return results;
 	}
-   
-  function boot(){
+
+  this.boot = function(){
 		if(running){
 			console.log('Shutting Down Computer');
 			running = false;
@@ -107,21 +87,31 @@ let MachineLoader = function(){
     }
   }  
 
-	bootButton.onclick = boot;
+  let ComponentHandlers = []
+
+  this.registerComponentHandler = function(cb){
+    ComponentHandlers.push(cb);
+    for(type in types){
+      cb(type,types[type]);
+    }
+  }
+
+  let UIHandlers = []
+
+  this.registerUIHandler = function(cb){
+    UIHandlers.push(cb);
+    for(address in components){
+      if(components[address].UI){
+        cb(components[address].type,components[address],loader);
+      }
+    }
+  }
 
   this.addComponentType = function(name, constructor){
     types[name]=constructor;
-    
-    let buttonElement = document.createElement('button');
-    buttonElement.innerText = "Add new "+name;
-    buttonElement.onclick = function(){loader.addComponent(name)}
-    componentAdd.appendChild(buttonElement);
-    
-    if(constructor.hasUI){
-      let uiElement = document.createElement('div');
-      uiElement.id=name;
-      document.body.appendChild(uiElement);
-      uiComponents[name]=uiElement;
+    for(var x in ComponentHandlers){
+      let cb = ComponentHandlers[x];
+      cb(name,constructor,loader);
     }
   }
   
@@ -139,17 +129,18 @@ let MachineLoader = function(){
     componentList[newComponent.address]=type;
     console.log("New "+type+" added with address "+newComponent.address);
     if(newComponent.UI){
-      if(uiComponents[type]){
-        newComponent.UI.id=type+'-'+newComponent.address;
-        newComponent.UI.className=type;
-        uiComponents[type].appendChild(newComponent.UI);
+      for(var x in UIHandlers){
+        let cb = UIHandlers[x];
+        cb(type,newComponent,loader);
       }
     }
     return newComponent.address;
   }
+
   this.machine.list = function(){
     return componentList;
   }
+
   this.machine.invoke = function(address,method,params,cb){
     if(components[address] && components[address].methods[method]){
       let results = components[address].methods[method](...params)

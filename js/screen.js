@@ -1,5 +1,6 @@
 let Screen = function(newloader) {
   this.UI = element = document.createElement("pre");
+  this.UI.className = "screen"
   let textHeight = 30;
   let textWidth = 80;
   this.address = '';
