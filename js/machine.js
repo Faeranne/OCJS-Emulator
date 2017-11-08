@@ -75,6 +75,9 @@ let MachineLoader = function(){
 	var getComponentList = function(type){
 		var allComp = computer.list();
 		var results = []
+    if(allComp.length == 0){
+      return [];
+    }
 		for(comp in allComp){
 			if(allComp[comp] == type){
 				results.push(comp);
@@ -91,14 +94,17 @@ let MachineLoader = function(){
 		}
 		console.log("Booting Computer");
 		running = true;
-	  eeprom = getComponentList('eeprom');
+	  eeprom = getComponentList('eeprom')[0];
 		if(eeprom){
 			computer.invoke(eeprom,'get',[],function(contents){
 				contents = dec2string(contents[0])
 				eval(contents);
 			});
-		} 	
-		loader.loop();
+      loader.loop();
+		}else{ 	
+      console.error("No EEPROM found. Shutting Down.");
+      running = false;
+    }
   }  
 
 	bootButton.onclick = boot;
@@ -176,6 +182,9 @@ let MachineLoader = function(){
 			}
       nextFunction();
       setTimeout(loader.loop,sleep*1000);
+    }else{
+      console.log("No Loop Function. Shutting Down");
+      running = false;
     }
   }
   
