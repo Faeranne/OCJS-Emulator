@@ -20,6 +20,49 @@ let MachineLoader = function(){
   bootButton.id="bootButton";
 	bootButton.innerText = "Power";
   componentAdd.appendChild(bootButton);
+  let saveButton = document.createElement("button");
+  saveButton.id="saveButton";
+  saveButton.innerText = "Save Current Config";
+  componentAdd.appendChild(saveButton);
+  let loadButton = document.createElement("button");
+  loadButton.id="saveButton";
+  loadButton.innerText = "Load Existing Config";
+  componentAdd.appendChild(loadButton);
+
+  this.saveConfig = function(){
+    let componentsToStore = [];
+    for(var x in components){
+      let component = {};
+      let y = components[x]; 
+      component.address = y.address;
+      component.type = componentList[x];
+      if(y.getConfig){
+        component.content = y.getConfig();
+      }
+      componentsToStore.push(component);
+    }
+    console.log(componentsToStore);
+    localStorage.setItem("defaultConfig",JSON.stringify(componentsToStore));
+  }
+
+  saveButton.onclick = this.saveConfig;
+
+  this.loadConfig = function(){
+    let componentsToRestore = JSON.parse(localStorage.getItem("defaultConfig"));
+    console.log(componentsToRestore);
+    for(var x in componentsToRestore){
+      console.log(x);
+      let component = componentsToRestore[x];
+      let generatedComponent = loader.addComponent(component.type,component.address);
+      console.log(components[generatedComponent])
+      console.log(component);
+      if(component.content){
+        components[generatedComponent].setConfig(component.content);
+      }
+    }
+  }
+
+  loadButton.onclick = this.loadConfig;
 
   var dec2string = function(arr){
     string = ""
@@ -76,12 +119,16 @@ let MachineLoader = function(){
     }
   }
   
-  this.addComponent = function(type,args){
+  this.addComponent = function(type,address,args){
+    if(!address){
+      address = guid();
+    }
     if(!args){
       args = [];
     }
     args.unshift(this);
     let newComponent = new types[type](...args);
+    newComponent.address = address;
     components[newComponent.address]=newComponent;
     componentList[newComponent.address]=type;
     console.log("New "+type+" added with address "+newComponent.address);
@@ -98,11 +145,13 @@ let MachineLoader = function(){
     return componentList;
   }
   this.machine.invoke = function(address,method,params,cb){
-    if(components[address] && components[address][method]){
-      let results = components[address][method](...params)
+    if(components[address] && components[address].methods[method]){
+      let results = components[address].methods[method](...params)
       if(typeof cb == "function"){
         cb(results);
       }
+    }else{
+      console.log('Error invoking',address,method,params);
     }
   }
   this.machine.sleepDefault = function(time){

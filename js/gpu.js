@@ -5,7 +5,7 @@ let GPU = function(newloader){
   let textWidth = 80;
   let loader = newloader;
   
-  this.address = guid();
+  this.address = '';
   
   function draw() {
     if(screen){
@@ -24,13 +24,15 @@ let GPU = function(newloader){
     }
   }
 
-  this.set = function(x, y, text, vertical) {
+  this.methods = {}
+
+  this.methods.set = function(x, y, text, vertical) {
     for (i = 0; i < text.length; i++) {
       textArray[y][x + i] = text[i];
     }
     draw();
   }
-  this.fill = function(x,y,w,h,character){
+  this.methods.fill = function(x,y,w,h,character){
     let char = character[0];
     for(i=y;i<h+y;i++){
       for(j=x;j<w+x;j++){
@@ -39,7 +41,7 @@ let GPU = function(newloader){
     }
     draw();
   }
-  this.copy = function(x1,y1,w,h,x2,y2){
+  this.methods.copy = function(x1,y1,w,h,x2,y2){
     let copyArray = [];
     for(i=0;i<h;i++){
       copyArray[i]=[];
@@ -55,7 +57,7 @@ let GPU = function(newloader){
     }
     draw();
   }
-  this.bind = function(address){
+  this.methods.bind = function(address){
     screen = address;
     clear();
   }

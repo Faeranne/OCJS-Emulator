@@ -17,7 +17,7 @@ var dec2string = function(arr){
 
 let EEPROM = function(newloader) {
   this.UI = document.createElement("div");
-  this.address = guid();
+  this.address = '';
   this.loader = newloader;
   let content = "";
   let maxSize = 4196;
@@ -32,11 +32,13 @@ let EEPROM = function(newloader) {
     textBox.value = content;
   }
 
-  this.get = function(){
+  this.methods = {}
+
+  this.methods.get = function(){
     let arr = string2dec(content);
     return [arr];
   }
-  this.set = function(string){
+  this.methods.set = function(string){
     if(typeof string == "array"){
 			string = dec2string(string);
 		}
@@ -44,7 +46,17 @@ let EEPROM = function(newloader) {
 		updateText();
 	}
 
+  this.getConfig = function(){
+    return content;
+  }
+
+  this.setConfig = function(newContent){
+    content = newContent;
+    updateText();
+  }
+
   return this;
 };
 
 EEPROM.hasUI = true;
+EEPROM.maxCount = 1;

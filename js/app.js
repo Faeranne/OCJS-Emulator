@@ -13,9 +13,4 @@ window.onload = function(){
   loader.addComponentType('gpu',GPU);
   loader.addComponentType('screen',Screen);
   loader.addComponentType('eeprom',EEPROM);
-  let gpu = loader.addComponent('gpu');
-  let screen = loader.addComponent('screen');
-  let eeprom = loader.addComponent('eeprom');
-  loader.machine.invoke(gpu,'bind',[screen]);
-  loader.machine.invoke(gpu,'set',[1,1,"Hello World"]);
 }

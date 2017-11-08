@@ -2,10 +2,12 @@ let Screen = function(newloader) {
   this.UI = element = document.createElement("pre");
   let textHeight = 30;
   let textWidth = 80;
-  this.address = guid();
+  this.address = '';
   this.loader = newloader;
 
-  this.clear = clear = function() {
+  this.methods = {}
+
+  this.methods.clear = clear = function() {
     let text = "";
     for (x = 0; x < textHeight; x++) {
       for (y = 0; y < textWidth; y++) {
@@ -16,7 +18,7 @@ let Screen = function(newloader) {
     element.innerText = text;
   };
 
-  this.draw = function(textArray) {
+  this.methods.draw = function(textArray) {
     let text = "";
     for (x = 0; x < textHeight; x++) {
       for (y = 0; y < textWidth; y++) {
