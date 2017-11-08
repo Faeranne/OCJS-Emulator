@@ -55,11 +55,14 @@ let MachineLoader = function(){
     for(var x in componentsToRestore){
       console.log(x);
       let component = componentsToRestore[x];
-      let generatedComponent = loader.addComponent(component.type,component.address);
-      console.log(components[generatedComponent])
-      console.log(component);
+      if(!component.address || !components[component.address]){
+        let newAddress = loader.addComponent(component.type,component.address);
+        if(!component.address){
+          component.address = newAddress;
+        }
+      }
       if(component.content){
-        components[generatedComponent].setConfig(component.content);
+        components[component.address].setConfig(component.content);
       }
     }
   }

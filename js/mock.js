@@ -67,9 +67,15 @@ let MOCKPlugin = function(newLoader){
     return this;
   }
 
-  let createMock = function(){
-    existingMocks.push(mockType.value);
-    loader.addComponentType(mockType.value,emptyMock);
+  let createMockButton = function(){
+    let name = mockType.value;
+    createMock(name);
+  }
+  let createMock = function(name){
+    if(existingMocks.indexOf(name)<0){
+      existingMocks.push(name);
+      loader.addComponentType(name,emptyMock);
+    }
   }
   
   let existingMocks = [];
@@ -79,11 +85,10 @@ let MOCKPlugin = function(newLoader){
   }
   this.setConfig = function(content){
     let mocks = JSON.parse(content);
-    existingMocks = mocks;
     console.log("Loading Mocks: ",mocks);
     for(var x in mocks){
-      mock = mocks[x];
-      loader.addComponentType(mock,emptyMock);
+      name = mocks[x];
+      createMock(name);
     }
   }
 
@@ -91,7 +96,7 @@ let MOCKPlugin = function(newLoader){
   let mockType = document.createElement('input');
   let createButton = document.createElement('button');
   createButton.innerText = "Create Mock Component";
-  createButton.onclick = createMock
+  createButton.onclick = createMockButton;
   this.UI.appendChild(mockType);
   this.UI.appendChild(createButton);
 
