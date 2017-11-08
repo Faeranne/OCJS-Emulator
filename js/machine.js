@@ -1,5 +1,6 @@
 let MachineLoader = function(){
   
+	let loader = this;
   let components = {};
   let componentList = {};
   let types = {};
@@ -7,18 +8,60 @@ let MachineLoader = function(){
   let sleep = 0;
   let sleepDefault = 0;
   let uiComponents = {};
+  let running = false;
   
   this.machine = {};
+	window.computer = this.machine;
   
   let componentAdd = document.createElement('div');
   componentAdd.id = "addComponentList";
   document.body.appendChild(componentAdd);
-  
-  
-  
+  let bootButton = document.createElement("button");
+  bootButton.id="bootButton";
+	bootButton.innerText = "Power";
+  componentAdd.appendChild(bootButton);
+
+  var dec2string = function(arr){
+    string = ""
+    for(var x in arr){
+      string = string + String.fromCharCode(arr[x])
+    }
+    return string
+  } 
+
+	var getComponentList = function(type){
+		var allComp = computer.list();
+		var results = []
+		for(comp in allComp){
+			if(allComp[comp] == type){
+				results.push(comp);
+			}
+		}
+		return results;
+	}
+   
+  function boot(){
+		if(running){
+			console.log('Shutting Down Computer');
+			running = false;
+			return;
+		}
+		console.log("Booting Computer");
+		running = true;
+	  eeprom = getComponentList('eeprom');
+		if(eeprom){
+			computer.invoke(eeprom,'get',[],function(contents){
+				contents = dec2string(contents[0])
+				eval(contents);
+			});
+		} 	
+		loader.loop();
+  }  
+
+	bootButton.onclick = boot;
+
   this.addComponentType = function(name, constructor){
     types[name]=constructor;
-    let loader = this;
     
     let buttonElement = document.createElement('button');
     buttonElement.innerText = "Add new "+name;
@@ -66,17 +109,24 @@ let MachineLoader = function(){
     sleepDefault = time;
   }
   this.machine.sleep = function(time){
-    if(time>sleepTime){
-      sleepTime = time;
+    if(time>sleep){
+      sleep = time;
     }
   }
   this.machine.next = function(cb){
     nextFunction = (typeof cb == "function")? cb : null;
   }
+
+	this.machine.print = function(){
+		console.log(...arguments);
+	}
   this.loop = function(){
     if(nextFunction){
+			if(!running){
+				return;
+			}
       nextFunction();
-      setTimeout(this.loop,sleep*1000);
+      setTimeout(loader.loop,sleep*1000);
     }
   }
   
