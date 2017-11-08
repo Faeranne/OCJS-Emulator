@@ -14,6 +14,16 @@ let MachineLoader = function(){
 	window.computer = this.machine;
 
   this.saveConfig = function(){
+    let pluginsToStore = [];
+    for(var x in Plugins){
+      let plugin = {}
+      let y = Plugins[x];
+      plugin.type = x;
+      if(y.getConfig){
+        plugin.content = y.getConfig();
+        pluginsToStore.push(plugin);
+      }
+    }
     let componentsToStore = [];
     for(var x in components){
       let component = {};
@@ -25,11 +35,21 @@ let MachineLoader = function(){
       }
       componentsToStore.push(component);
     }
+    console.log(pluginsToStore);
     console.log(componentsToStore);
+    localStorage.setItem("defaultPlugins",JSON.stringify(pluginsToStore));
     localStorage.setItem("defaultConfig",JSON.stringify(componentsToStore));
   }
 
   this.loadConfig = function(){
+    let pluginsToRestore = JSON.parse(localStorage.getItem("defaultPlugins"));
+    for(var x in pluginsToRestore){
+      let plugin = pluginsToRestore[x];
+      console.log("Loading Plugin Config:",plugin);
+      if(Plugins[plugin.type]){
+        Plugins[plugin.type].setConfig(plugin.content);
+      }
+    }
     let componentsToRestore = JSON.parse(localStorage.getItem("defaultConfig"));
     console.log(componentsToRestore);
     for(var x in componentsToRestore){
@@ -106,6 +126,19 @@ let MachineLoader = function(){
       }
     }
   }
+
+  let Plugins = {};
+  this.addPlugin = function(name,constructor){
+    let newPlugin = new constructor(loader);
+    Plugins[name]=newPlugin;
+    if(newPlugin.UI){
+      for(var x in UIHandlers){
+        let cb = UIHandlers[x];
+        cb(name,newPlugin,loader);
+      }
+    }
+  }
+
 
   this.addComponentType = function(name, constructor){
     types[name]=constructor;

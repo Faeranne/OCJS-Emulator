@@ -28,6 +28,7 @@ window.onload = function(){
   loader.registerUIHandler(manageUI);
   document.body.appendChild(machineUI);
   document.body.appendChild(componentList);
+  loader.addPlugin('mock',MOCKPlugin);
   loader.addComponentType('gpu',GPU);
   loader.addComponentType('screen',Screen);
   loader.addComponentType('eeprom',EEPROM);
