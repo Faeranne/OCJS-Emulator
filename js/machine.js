@@ -15,6 +15,7 @@ let MachineLoader = function(){
   let running = false;
   
   this.machine = {};
+  this.playerName = 'Player'+(Math.floor(Math.random()*8999)+1000);
 
   function guid() {
     function s4() {

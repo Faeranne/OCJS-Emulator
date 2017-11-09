@@ -6,4 +6,5 @@ window.onload = function(){
   loader.addComponentType('gpu',GPU);
   loader.addComponentType('screen',Screen);
   loader.addComponentType('eeprom',EEPROM);
+  loader.addComponentType('keyboard',Keyboard);
 }
