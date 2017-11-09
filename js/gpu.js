@@ -27,6 +27,7 @@ let GPU = function(newloader){
   this.methods = {}
 
   this.methods.set = function(x, y, text, vertical) {
+    text = text.toString();
     for (i = 0; i < text.length; i++) {
       textArray[y][x + i] = text[i];
     }
