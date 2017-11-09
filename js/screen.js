@@ -3,6 +3,8 @@ let Screen = function(newloader) {
   this.UI.className = "screen"
   let textHeight = 30;
   let textWidth = 80;
+  this.Width = 5;
+  this.Height = 6;
   this.address = '';
   this.loader = newloader;
 

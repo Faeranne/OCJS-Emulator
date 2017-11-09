@@ -1,6 +1,8 @@
 let MOCKPlugin = function(newLoader){
   this.loader = newLoader;
   this.UI = document.createElement('div');
+  this.Width = 3;
+  this.Height = 1;
 
 
   let emptyMock = function(newLoader){
@@ -8,6 +10,8 @@ let MOCKPlugin = function(newLoader){
     this.address = ""
     this.UI = document.createElement('div');
     this.methods = {};
+		this.Width = 2;
+		this.Height = 4;
 
     mock = this;
 
