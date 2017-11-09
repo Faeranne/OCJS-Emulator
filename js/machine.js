@@ -8,10 +8,22 @@ let MachineLoader = function(){
   let sleep = 0;
   let sleepDefault = 0;
   let uiComponents = {};
+  let ComponentHandlers = []
+  let UIHandlers = []
+  let Plugins = {};
   let running = false;
   
   this.machine = {};
-	window.computer = this.machine;
+
+  function guid() {
+    function s4() {
+      return Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+      s4() + '-' + s4() + s4() + s4();
+  }
 
   this.saveConfig = function(){
     let pluginsToStore = [];
@@ -110,16 +122,12 @@ let MachineLoader = function(){
     }
   }  
 
-  let ComponentHandlers = []
-
   this.registerComponentHandler = function(cb){
     ComponentHandlers.push(cb);
     for(type in types){
       cb(type,types[type]);
     }
   }
-
-  let UIHandlers = []
 
   this.registerUIHandler = function(cb){
     UIHandlers.push(cb);
@@ -129,8 +137,6 @@ let MachineLoader = function(){
       }
     }
   }
-
-  let Plugins = {};
   this.addPlugin = function(name,constructor){
     let newPlugin = new constructor(loader);
     Plugins[name]=newPlugin;
@@ -141,7 +147,6 @@ let MachineLoader = function(){
       }
     }
   }
-
 
   this.addComponentType = function(name, constructor){
     types[name]=constructor;
