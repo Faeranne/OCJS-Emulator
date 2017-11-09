@@ -79,29 +79,28 @@ let MachineLoader = function(){
     }
   }
 
-  var dec2string = function(arr){
-    string = ""
-    for(var x in arr){
-      string = string + String.fromCharCode(arr[x])
-    }
-    return string
-  } 
-
-	var getComponentList = function(type){
-		var allComp = computer.list();
-		var results = []
-    if(allComp.length == 0){
-      return [];
-    }
-		for(comp in allComp){
-			if(allComp[comp] == type){
-				results.push(comp);
-			}
-		}
-		return results;
-	}
-
   this.boot = function(){
+    var dec2string = function(arr){
+      string = ""
+      for(var x in arr){
+        string = string + String.fromCharCode(arr[x])
+      }
+      return string
+    } 
+
+    var getComponentList = function(type){
+      var allComp = loader.machine.list();
+      var results = []
+      if(allComp.length == 0){
+        return [];
+      }
+      for(comp in allComp){
+        if(allComp[comp] == type){
+          results.push(comp);
+        }
+      }
+      return results;
+    }
 		if(running){
 			console.log('Shutting Down Computer');
 			running = false;
@@ -111,9 +110,19 @@ let MachineLoader = function(){
 		running = true;
 	  eeprom = getComponentList('eeprom')[0];
 		if(eeprom){
-			computer.invoke(eeprom,'get',[],function(contents){
+			loader.machine.invoke(eeprom,'get',[],function(contents){
 				contents = dec2string(contents[0])
-				eval(contents);
+
+				let mask = {};
+				for (p in window)
+					mask[p] = undefined;
+
+					try{
+						(new Function("computer", "with(this) { " + contents + "}")).call(mask,loader.machine);
+					}catch (e){
+						console.error("Error Executing code in EEPROM:");
+						console.error(e);
+					}
 			});
       loader.loop();
 		}else{ 	
@@ -178,6 +187,19 @@ let MachineLoader = function(){
     return newComponent.address;
   }
 
+  this.loop = function(){
+    if(nextFunction){
+			if(!running){
+				return;
+			}
+      nextFunction();
+      setTimeout(loader.loop,sleep*1000);
+    }else{
+      console.log("No Loop Function. Shutting Down");
+      running = false;
+    }
+  }
+
   this.machine.list = function(){
     return componentList;
   }
@@ -207,18 +229,6 @@ let MachineLoader = function(){
 	this.machine.print = function(){
 		console.log(...arguments);
 	}
-  this.loop = function(){
-    if(nextFunction){
-			if(!running){
-				return;
-			}
-      nextFunction();
-      setTimeout(loader.loop,sleep*1000);
-    }else{
-      console.log("No Loop Function. Shutting Down");
-      running = false;
-    }
-  }
   
   return this;
 }
