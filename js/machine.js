@@ -11,6 +11,7 @@ let MachineLoader = function(){
   let ComponentHandlers = []
   let UIHandlers = []
   let Plugins = {};
+  let Signals = [];
   let running = false;
   
   this.machine = {};
@@ -200,8 +201,17 @@ let MachineLoader = function(){
     }
   }
 
+  this.pushSignal = function(name,args){
+    Signals.push({name:name,args:args});
+  }
+
   this.machine.list = function(){
     return componentList;
+  }
+
+  this.machine.popSignal = function(){
+    let signal = Signals.shift();
+    return signal;
   }
 
   this.machine.invoke = function(address,method,params,cb){
