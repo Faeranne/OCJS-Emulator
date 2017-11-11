@@ -43,4 +43,4 @@ name: OCJS-Emulator
 
 windows:
   - editor: vim
-  - serve: python -m SimpleHTTPServer
+  - serve: beefy js/app.js --live

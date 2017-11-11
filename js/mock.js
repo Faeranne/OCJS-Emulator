@@ -1,4 +1,4 @@
-let MOCKPlugin = function(newLoader){
+module.exports = function(newLoader){
   this.loader = newLoader;
   this.UI = document.createElement('div');
   this.Width = 3;

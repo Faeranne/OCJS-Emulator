@@ -21,3 +21,4 @@ let Keyboard = function(newLoader){
 
   return this;
 }
+module.exports = Keyboard;

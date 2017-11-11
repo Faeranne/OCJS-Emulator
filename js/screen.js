@@ -36,3 +36,5 @@ let Screen = function(newloader) {
 };
 
 Screen.hasUI = true;
+
+module.exports = Screen;

@@ -65,3 +65,4 @@ let GPU = function(newloader){
   clear();
   return this;
 }
+module.exports = GPU;

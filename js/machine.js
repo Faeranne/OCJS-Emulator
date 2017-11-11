@@ -258,3 +258,5 @@ let MachineLoader = function(){
   
   return this;
 }
+
+module.exports = MachineLoader

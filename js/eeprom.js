@@ -62,3 +62,5 @@ let EEPROM = function(newloader) {
 
 EEPROM.hasUI = true;
 EEPROM.maxCount = 1;
+
+module.exports = EEPROM;
