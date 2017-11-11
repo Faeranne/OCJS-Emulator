@@ -6,7 +6,7 @@ let Screen = function(newloader) {
   this.Width = 5;
   this.Height = 6;
   this.address = '';
-  this.loader = newloader;
+  let loader = newloader;
 
   this.methods = {}
 

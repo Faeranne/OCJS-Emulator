@@ -44,6 +44,7 @@ let EEPROM = function(newloader) {
   let content = "";
   let maxSize = 4196;
   let readOnly = false;
+  let loader = newloader;
 
   let textBox = document.createElement("textarea");
   textBox.onchange = function() {
@@ -447,7 +448,7 @@ module.exports = MachineLoader
 
 },{}],7:[function(require,module,exports){
 module.exports = function(newLoader){
-  this.loader = newLoader;
+  let loader = newLoader;
   this.UI = document.createElement('div');
   this.Width = 3;
   this.Height = 1;
@@ -571,7 +572,7 @@ let Screen = function(newloader) {
   this.Width = 5;
   this.Height = 6;
   this.address = '';
-  this.loader = newloader;
+  let loader = newloader;
 
   this.methods = {}
 

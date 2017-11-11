@@ -24,6 +24,7 @@ let EEPROM = function(newloader) {
   let content = "";
   let maxSize = 4196;
   let readOnly = false;
+  let loader = newloader;
 
   let textBox = document.createElement("textarea");
   textBox.onchange = function() {

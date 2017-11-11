@@ -1,5 +1,5 @@
 module.exports = function(newLoader){
-  this.loader = newLoader;
+  let loader = newLoader;
   this.UI = document.createElement('div');
   this.Width = 3;
   this.Height = 1;
