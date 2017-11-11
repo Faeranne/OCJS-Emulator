@@ -10,6 +10,7 @@ let MachineLoader = function(){
   let uiComponents = {};
   let ComponentHandlers = []
   let UIHandlers = []
+  let BootHandlers = []
   let Plugins = {};
   let Signals = [];
   let running = false;
@@ -82,6 +83,7 @@ let MachineLoader = function(){
   }
 
   this.boot = function(){
+    Signals = [];
     var dec2string = function(arr){
       string = ""
       for(var x in arr){
@@ -104,10 +106,18 @@ let MachineLoader = function(){
       return results;
     }
 		if(running){
+      for(var x in BootHandlers){
+        let cb = BootHadlers[x];
+        cb(false);
+      }
 			console.log('Shutting Down Computer');
 			running = false;
 			return;
 		}
+    for(var x in BootHandlers){
+      let cb = BootHadlers[x];
+      cb(true);
+    }
 		console.log("Booting Computer");
 		running = true;
 	  eeprom = getComponentList('eeprom')[0];
@@ -148,6 +158,11 @@ let MachineLoader = function(){
       }
     }
   }
+
+  this.registerBootHandler = function(cb){
+    BootHandlers.push(cb);
+  }
+
   this.addPlugin = function(name,constructor){
     let newPlugin = new constructor(loader);
     Plugins[name]=newPlugin;
