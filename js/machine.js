@@ -210,7 +210,7 @@ let MachineLoader = function(){
     return componentList;
   }
 
-  this.machine.popSignal = function(){
+  this.machine.pullSignal = function(){
     let signal = Signals.shift();
     return signal;
   }
