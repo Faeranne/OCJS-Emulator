@@ -9,7 +9,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "node watch.js",
-    "build": "node build.js"
+    "build": "node build.js",
+    "publish": "npm run build; node_modules/.bin/gh-pages -d build -a"
   },
   "repository": {
     "type": "git",
