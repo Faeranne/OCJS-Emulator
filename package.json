@@ -1,0 +1,32 @@
+{
+  "name": "ocjs-emulator",
+  "version": "0.0.1",
+  "description": "Emulates the OCJS API and OpenComputers Components in the browser.",
+  "main": "app.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "node watch.js",
+    "build": "node build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrmakeit/OCJS-Emulator.git"
+  },
+  "author": "Blixa Morgan <MrMakeIt> (blixa@projectmakeit.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mrmakeit/OCJS-Emulator/issues"
+  },
+  "homepage": "https://mrmakeit.github.io/OCJS-Emulator/app.html",
+  "dependencies": {
+    "browserify": "^14.5.0",
+    "cassini": "^0.1.7",
+    "express": "^4.16.2",
+    "express-static": "^1.2.5",
+    "gh-pages": "^1.0.0",
+    "watch": "^1.0.2"
+  }
+}

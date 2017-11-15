@@ -43,4 +43,11 @@ name: OCJS-Emulator
 
 windows:
   - editor: vim
-  - serve: beefy js/app.js --live
+  - serve: 
+      layout: even-horizontal
+      # Synchronize all panes of this window, can be enabled before or after the pane commands run.
+      # 'before' represents legacy functionality and will be deprecated in a future release, in favour of 'after'
+      # synchronize: after
+      panes:
+        - beefy js/app.js --live
+        - npm run watch
