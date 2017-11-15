@@ -4,4 +4,4 @@
 
 ## Usage
 
-The emulator can be accessed online [here](/app/index.html);
+The emulator can be accessed online [here](app/index.html);
