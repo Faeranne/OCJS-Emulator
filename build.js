@@ -1,6 +1,6 @@
 const file = require('fs');
 const path = require('path');
-const cassini = require('cassini');
+const cassini = require('@mrmakeit/cassini');
 const browserify = require('browserify');
 
 let build = {}

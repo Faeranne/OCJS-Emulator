@@ -23,8 +23,8 @@
   },
   "homepage": "https://mrmakeit.github.io/OCJS-Emulator/app.html",
   "dependencies": {
+    "beefy": "^2.1.8",
     "browserify": "^14.5.0",
-    "cassini": "^0.1.7",
     "express": "^4.16.2",
     "express-static": "^1.2.5",
     "gh-pages": "^1.0.0",

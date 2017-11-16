@@ -49,5 +49,5 @@ windows:
       # 'before' represents legacy functionality and will be deprecated in a future release, in favour of 'after'
       # synchronize: after
       panes:
-        - beefy js/app.js --live
+        - node_modules/.bin/beefy js/app.js --live
         - npm run watch
