@@ -14,7 +14,7 @@ let MachineLoader = function(){
   let Plugins = {};
   let Signals = [];
   let running = false;
-  
+
   this.machine = {};
   this.playerName = 'Player'+(Math.floor(Math.random()*8999)+1000);
 
@@ -105,43 +105,43 @@ let MachineLoader = function(){
       }
       return results;
     }
-		if(running){
+    if(running){
       for(var x in BootHandlers){
         let cb = BootHadlers[x];
         cb(false);
       }
-			console.log('Shutting Down Computer');
-			running = false;
-			return;
-		}
+      console.log('Shutting Down Computer');
+      running = false;
+      return;
+    }
     for(var x in BootHandlers){
       let cb = BootHadlers[x];
       cb(true);
     }
-		console.log("Booting Computer");
-		running = true;
-	  eeprom = getComponentList('eeprom')[0];
-		if(eeprom){
-			loader.machine.invoke(eeprom,'get',[],function(contents){
-				contents = dec2string(contents[0])
+    console.log("Booting Computer");
+    running = true;
+    eeprom = getComponentList('eeprom')[0];
+    if(eeprom){
+      loader.machine.invoke(eeprom,'get',[],function(contents){
+        contents = dec2string(contents[0])
 
-				let mask = {};
-				for (p in window)
-					mask[p] = undefined;
+        let mask = {};
+        for (p in window)
+          mask[p] = undefined;
 
-					try{
-						(new Function("computer", "with(this) { " + contents + "}")).call(mask,loader.machine);
-					}catch (e){
-						console.error("Error Executing code in EEPROM:");
-						console.error(e);
-					}
-			});
+          try{
+            (new Function("computer", "with(this) { " + contents + "}")).call(mask,loader.machine);
+          }catch (e){
+            console.error("Error Executing code in EEPROM:");
+            console.error(e);
+          }
+      });
       loader.loop();
-		}else{ 	
+    }else{ 	
       console.error("No EEPROM found. Shutting Down.");
       running = false;
     }
-  }  
+  }
 
   this.registerComponentHandler = function(cb){
     ComponentHandlers.push(cb);
@@ -240,14 +240,25 @@ let MachineLoader = function(){
       console.log('Error invoking',address,method,params);
     }
   }
+  this.machine.invokeSync = function(address,method,params){
+    if(components[address] && components[address].methods[method]){
+      let results = components[address].methods[method](...params)
+      return results
+    }else{
+      console.log('Error invoking',address,method,params);
+    }
+  }
+
   this.machine.sleepDefault = function(time){
     sleepDefault = time;
   }
+
   this.machine.sleep = function(time){
     if(time>sleep){
       sleep = time;
     }
   }
+
   this.machine.next = function(cb){
     nextFunction = (typeof cb == "function")? cb : null;
   }
