@@ -209,6 +209,7 @@ let MachineLoader = function(){
 			if(!running){
 				return;
 			}
+      sleep=0;
       nextFunction();
       setTimeout(loader.loop,sleep*1000);
     }else{
