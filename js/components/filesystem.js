@@ -4,12 +4,57 @@ let FileSystem = function(newLoader){
   this.methods = {};
   this.UI = document.createElement('div');
 
+	this.UIList = document.createElement('select');
+	this.UIContent = document.createElement('textarea')
+	this.UIReload = document.createElement('button');
+	this.UIName = document.createElement('input');
+	this.UICreate = document.createElement('button');
+
+	this.UIList.setAttribute('size',20);
+	this.UIList.setAttribute('style','font-family: monospace;') 
+	this.UIList.onchange = function(e){
+		console.log(this.value)
+		FileSystem.UIContent.value=fs.readFileSync(this.value).toString();
+		FileSystem.UIName.value = this.value
+	}
+
+	this.UIReload.innerText="Reload"
+	this.UIReload.onclick = function(){
+		FileSystem.reloadUI();
+	}
+
+	this.UICreate.innerText = "Create"
+	this.UICreate.onclick = function(){
+		saveFileCreateFolder();
+	}
+
+	this.UI.appendChild(this.UIList);
+	this.UI.appendChild(this.UIReload);
+	this.UI.appendChild(this.UIName);
+	this.UI.appendChild(this.UICreate);
+	this.UI.appendChild(this.UIContent)
+
   let fs = new MemoryFileSystem();
   let label = "Disk";
   let handles = [];
   let openHandles = 0;
 
+	console.log(this);
   let FileSystem = this;
+
+	let saveFileCreateFolder = function(){
+		let name = FileSystem.UIName.value;
+		if(name.substring(name.length-1,name.length)=="/"){
+			fs.mkdirpSync(name);
+			FileSystem.reloadUI();
+		}else{
+			try{
+			fs.writeFileSync(name,FileSystem.UIContent.value);
+			FileSystem.reloadUI();
+			}catch(e){
+			}
+		}
+	}
 
   let getNewHandle = function(newHandle){
     if(openHandles >= 30){
@@ -31,8 +76,67 @@ let FileSystem = function(newLoader){
     openHandles--;
   }
 
+	let parseFileSystem = function(path){
+		let results = {};
+		let dir = fs.readdirSync(path);
+		console.log(dir);
+		for(x in dir){
+			entry = dir[x]
+			if(fs.statSync(path+'/'+entry).isDirectory()){
+				results[entry]=parseFileSystem(path+'/'+entry);
+			}else{
+				results[entry]="file";
+			}
+		}
+		return results;
+	}
+
+  this.reloadUI = function(){
+		let fs = parseFileSystem('/');
+    let list = FileSystem.UIList
+		let wrapOutputAsOption=function(text,value){
+		return "<option value='"+value+"'>"+text+"</option>\n";
+		}
+		let layer = 0;
+		let walkObjectTree = function(tree,name,layers,last,oldLayers){
+			if(typeof tree == 'string'){
+				return wrapOutputAsOption(layers+"-"+name,oldLayers+'/'+name);
+			}
+			let keys = Object.keys(tree);
+			let output = ""
+			if(name==""){
+				output = wrapOutputAsOption(layers+'-/',oldLayers+'/');
+			}else{
+				output = wrapOutputAsOption(layers+'-'+name+'/',oldLayers+'/'+name+'/');
+			}
+			let nextLast = false;
+			if(name!=''){
+				newLayers = oldLayers + '/'+name;
+			}else{
+				newLayers = ""
+			}
+			for(var x = 0; x<keys.length; x++){
+				let layer = layers
+				if(last){
+					layer=layer.substring(0,layer.length-1)+"=";
+				}
+				if(x<=keys.length-2){
+					layer = layer+'|';
+				}else{
+					layer = layer+'\\';
+					nextLast = true;
+				}
+				output = output + walkObjectTree(tree[keys[x]],keys[x],layer,nextLast,newLayers);
+			}
+			return output;
+		}
+		walkedObjects=walkObjectTree(fs,'','',false,'')
+		console.log(walkedObjects);
+		list.innerHTML=walkedObjects;
+	}
   this.reloadFS = function(newFS){
     fs = new MemoryFileSystem(newFS);
+		FileSystem.reloadUI();
     console.log(fs);
   }
 
@@ -44,7 +148,18 @@ let FileSystem = function(newLoader){
     return JSON.stringify(FileSystem.saveFS());
   }
   this.setConfig = function(content){
-    let newFS = JSON.parse(content);
+    let newFS = JSON.parse(content, (k, v) => {
+			if ( v !== null &&
+				typeof v === 'object' &&
+				'type' in v &&
+        v.type === 'Buffer' &&
+        'data' in v &&
+        Array.isArray(v.data)) {
+        console.log(v);
+        return new Buffer(v.data);
+      }
+      return v;
+    });
     FileSystem.reloadFS(newFS);
   }
 
@@ -106,6 +221,8 @@ let FileSystem = function(newLoader){
     label = newLabel;
     return label;
   }
+
+	this.reloadUI();
 
   return this;
 }
