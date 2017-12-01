@@ -210,7 +210,13 @@ let MachineLoader = function(){
 				return;
 			}
       sleep=0;
-      nextFunction();
+      try{
+        nextFunction();
+      }catch (e){
+        running = false;
+        console.error("Uncaught Error. Shutting Down VM")
+        console.error(e);
+      }
       setTimeout(loader.loop,sleep*1000);
     }else{
       console.log("No Loop Function. Shutting Down");
