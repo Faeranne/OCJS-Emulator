@@ -201,6 +201,14 @@
 </select>
 
 	<h2><a href="#Usage">Usage</a></h2>
+	<h2><a href="#UI">UI</a></h2>
+	<h2><a href="#Computer-Mangement">Computer Mangement</a></h2>
+	<h3><a href="#Power">Power</a></h3>
+	<h3><a href="#Save-Config">Save Config</a></h3>
+	<h3><a href="#Load-Config">Load Config</a></h3>
+	<h2><a href="#Component-Managment">Component Managment</a></h2>
+	<h2><a href="#Plugins">Plugins</a></h2>
+	<h3><a href="#Mock-Plugin">Mock Plugin</a></h3>
 
 </div>
 
@@ -209,6 +217,22 @@
 <p><a href="https://github.com/mrmakeit/OCJS/">OCJS</a> is a Javascript based architecture mod for the Minecraft mod <a href="https://github.com/MightyPirates/OpenComputers">OpenComputer</a>.</p>
 <h2 id="Usage">Usage</h2>
 <p>The latest version of the emulator can be accessed online <a href="../app/index.html">here</a>;</p>
+<h2 id="UI">UI</h2>
+<p>While the UI is still under construction, it hosts everything needed to actually use the emulator.</p>
+<h2 id="Computer-Mangement">Computer Mangement</h2>
+<p>The first three buttons hand computer management.  These affect the state of the computer, as well as handling loading and saving of states.</p>
+<h3 id="Power">Power</h3>
+<p>Fairly straight forward, this acts like the in-game power button, turning the computer on when off, and off when on.</p>
+<h3 id="Save-Config">Save Config</h3>
+<p>This saves the current state of the computer, including the components installed and their addresses, plugins installed, and saveable config for all of them.  By default, this saves to a generic config, but should support multiple configs soon.  The config is saved locally in the browser.</p>
+<h3 id="Load-Config">Load Config</h3>
+<p>This loads a prevously saved state, restoring components with their addresses and configs, and plugins.  This does not remove already exsisting components, and does not check if exsisting components already have the same address.</p>
+<h2 id="Component-Managment">Component Managment</h2>
+<p>The second row of buttons handle adding new components to the computer.  Clicking any of them add a new instance of the component with a random id.  If the component has a GUI element, that will be added as well.  Components can not be deleted at this time.</p>
+<h2 id="Plugins">Plugins</h2>
+<p>While components are added to, and work with, the computer, plugins work with the VM itself.  The can modify most aspects of the VM, including adding new components on-the-fly, like the mock plugin</p>
+<h3 id="Mock-Plugin">Mock Plugin</h3>
+<p>This plugin adds modifyable, static, components.  Enter a compatable component name and click create, and a new component type will show up in the component bar.  While mock components can&#39;t currently accept parameters, the can execute javascript and return values.  Function names can be added and edited with the first text box, while the associated function is created with the second box.</p>
 
 </div>
 
