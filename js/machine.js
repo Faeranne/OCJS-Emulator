@@ -1,89 +1,29 @@
-let MachineLoader = function(){
-  
-	let loader = this;
-  let components = {};
-  let componentList = {};
-  let types = {};
-  let nextFunction = null;
-  let sleep = 0;
-  let sleepDefault = 0;
-  let uiComponents = {};
-  let ComponentHandlers = []
-  let UIHandlers = []
-  let BootHandlers = []
-  let Plugins = {};
-  let Signals = [];
-  let running = false;
-
-  this.machine = {};
-  this.playerName = 'Player'+(Math.floor(Math.random()*8999)+1000);
-
-  function guid() {
-    function s4() {
-      return Math.floor((1 + Math.random()) * 0x10000)
-        .toString(16)
-        .substring(1);
+let Machine = function(myLoader){
+  let loader = myLoader;
+  let machine = this;
+  let interpreter = null;
+  let memory = 0;
+  let cpu = 0;
+  let tickCount = 0;
+  let init = function(interpreter,scope){
+    interpreter.setProperty(scope, 'list',interpreter.createNativeFunction(loader.list))
+    interpreter.setProperty(scope, 'pullSignal',interpreter.createNativeFunction(loader.pullSignal))
+    let invokeWrapper = function(address,method,params,cb){
+      loader.invoke(address,method,params,function(res){
+        cb(res);
+      })
     }
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-      s4() + '-' + s4() + s4() + s4();
+    let sleepWrapper = function(time,cb){
+      setTimeout(cb,time);
+    }
+    interpreter.setProperty(scope, 'sleep', interpreter.createAsyncFunction(sleepWrapper);
+    interpreter.setProperty(scope, 'invokeSync', interpreter.createAsyncFunction(invokeWrapper);
+    interpreter.setProperty(scope, 'invoke',interpreter.createNativeFunction(loader.invoke))
   }
-
-  this.saveConfig = function(){
-    let pluginsToStore = [];
-    for(var x in Plugins){
-      let plugin = {}
-      let y = Plugins[x];
-      plugin.type = x;
-      if(y.getConfig){
-        plugin.content = y.getConfig();
-        pluginsToStore.push(plugin);
-      }
-    }
-    let componentsToStore = [];
-    for(var x in components){
-      let component = {};
-      let y = components[x]; 
-      component.address = y.address;
-      component.type = componentList[x];
-      if(y.getConfig){
-        component.content = y.getConfig();
-      }
-      componentsToStore.push(component);
-    }
-    console.log(pluginsToStore);
-    console.log(componentsToStore);
-    localStorage.setItem("defaultPlugins",JSON.stringify(pluginsToStore));
-    localStorage.setItem("defaultConfig",JSON.stringify(componentsToStore));
-  }
-
-  this.loadConfig = function(){
-    let pluginsToRestore = JSON.parse(localStorage.getItem("defaultPlugins"));
-    for(var x in pluginsToRestore){
-      let plugin = pluginsToRestore[x];
-      console.log("Loading Plugin Config:",plugin);
-      if(Plugins[plugin.type]){
-        Plugins[plugin.type].setConfig(plugin.content);
-      }
-    }
-    let componentsToRestore = JSON.parse(localStorage.getItem("defaultConfig"));
-    console.log(componentsToRestore);
-    for(var x in componentsToRestore){
-      console.log(x);
-      let component = componentsToRestore[x];
-      if(!component.address || !components[component.address]){
-        let newAddress = loader.addComponent(component.type,component.address);
-        if(!component.address){
-          component.address = newAddress;
-        }
-      }
-      if(component.content){
-        components[component.address].setConfig(component.content);
-      }
-    }
-  }
-
-  this.boot = function(){
+  this.start = function(){
+    tickCount = 0;
     Signals = [];
+
     var dec2string = function(arr){
       string = ""
       for(var x in arr){
@@ -93,7 +33,7 @@ let MachineLoader = function(){
     } 
 
     var getComponentList = function(type){
-      var allComp = loader.machine.list();
+      var allComp = loader.list();
       var results = []
       if(allComp.length == 0){
         return [];
@@ -105,176 +45,360 @@ let MachineLoader = function(){
       }
       return results;
     }
+		/*
     if(running){
       for(var x in BootHandlers){
         let cb = BootHadlers[x];
         cb(false);
       }
       console.log('Shutting Down Computer');
-      running = false;
       return;
     }
     for(var x in BootHandlers){
       let cb = BootHadlers[x];
       cb(true);
     }
+		*/
     console.log("Booting Computer");
-    running = true;
     eeprom = getComponentList('eeprom')[0];
     if(eeprom){
-      loader.machine.invoke(eeprom,'get',[],function(contents){
+      loader.invoke(eeprom,'get',[],function(contents){
         contents = dec2string(contents[0])
-
-        let mask = {};
-        for (p in window)
-          mask[p] = undefined;
-
-          try{
-            (new Function("computer", "with(this) { " + contents + "}")).call(mask,loader.machine);
-          }catch (e){
-            console.error("Error Executing code in EEPROM:");
-            console.error(e);
-          }
-      });
-      loader.loop();
-    }else{ 	
-      console.error("No EEPROM found. Shutting Down.");
-      running = false;
+        interpreter = new Interpreter(contents,init);
+      })
     }
   }
-
-  this.registerComponentHandler = function(cb){
-    ComponentHandlers.push(cb);
-    for(type in types){
-      cb(type,types[type]);
-    }
-  }
-
-  this.registerUIHandler = function(cb){
-    UIHandlers.push(cb);
-    for(address in components){
-      if(components[address].UI){
-        cb(components[address].type,components[address],loader);
+  this.tick = function(){
+    tickCount++;
+    if(interpreter){
+      let success = interpreter.step();
+      if(!success){
+        loader.error("Kernal quit unexpectedly");
+        return;
       }
+    }else{
+			return;
+      loader.error("Machine Offline")
     }
-  }
-
-  this.registerBootHandler = function(cb){
-    BootHandlers.push(cb);
-  }
-
-  this.addPlugin = function(name,constructor){
-    let newPlugin = new constructor(loader);
-    Plugins[name]=newPlugin;
-    if(newPlugin.UI){
-      for(var x in UIHandlers){
-        let cb = UIHandlers[x];
-        cb(name,newPlugin,loader);
-      }
-    }
-  }
-
-  this.addComponentType = function(name, constructor){
-    types[name]=constructor;
-    for(var x in ComponentHandlers){
-      let cb = ComponentHandlers[x];
-      cb(name,constructor,loader);
-    }
-  }
-  
-  this.addComponent = function(type,address,args){
-    if(!address){
-      address = guid();
-    }
-    if(!args){
-      args = [];
-    }
-    args.unshift(this);
-    let newComponent = new types[type](...args);
-    newComponent.address = address;
-    components[newComponent.address]=newComponent;
-    componentList[newComponent.address]=type;
-    console.log("New "+type+" added with address "+newComponent.address);
-    if(newComponent.UI){
-      for(var x in UIHandlers){
-        let cb = UIHandlers[x];
-        cb(type,newComponent,loader);
-      }
-    }
-    return newComponent.address;
-  }
-
-  this.loop = function(){
-    if(nextFunction){
-			if(!running){
+    if(tickCount>100){
+			state = serialize(interpreter);
+			if((state-initState)>memory*memMultiplier){
+				loader.error("Out-of-memory");
 				return;
 			}
-      sleep=0;
-      try{
-        nextFunction();
-      }catch (e){
-        running = false;
-        console.error("Uncaught Error. Shutting Down VM")
-        console.error(e);
-      }
-      setTimeout(loader.loop,sleep*1000);
-    }else{
-      console.log("No Loop Function. Shutting Down");
-      running = false;
-    }
-  }
-
-  this.pushSignal = function(name,args){
-    Signals.push({name:name,args:args});
-  }
-
-  this.machine.list = function(){
-    return componentList;
-  }
-
-  this.machine.pullSignal = function(){
-    let signal = Signals.shift();
-    return signal;
-  }
-
-  this.machine.invoke = function(address,method,params,cb){
-    if(components[address] && components[address].methods[method]){
-      let results = components[address].methods[method](...params)
-      if(typeof cb == "function"){
-        cb(results);
-      }
-    }else{
-      console.log('Error invoking',address,method,params);
-    }
-  }
-  this.machine.invokeSync = function(address,method,params){
-    if(components[address] && components[address].methods[method]){
-      let results = components[address].methods[method](...params)
-      return results
-    }else{
-      console.log('Error invoking',address,method,params);
-    }
-  }
-
-  this.machine.sleepDefault = function(time){
-    sleepDefault = time;
-  }
-
-  this.machine.sleep = function(time){
-    if(time>sleep){
-      sleep = time;
-    }
-  }
-
-  this.machine.next = function(cb){
-    nextFunction = (typeof cb == "function")? cb : null;
-  }
-
-	this.machine.print = function(){
-		console.log(...arguments);
+		}
+		setTimeout(machine.tick,cpu);
 	}
-  
-  return this;
 }
 
-module.exports = MachineLoader
+
+/**
+ * @license
+ * JavaScript Interpreter: serialization and deserialization
+ *
+ * Copyright 2017 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @fileoverview Saving and restoring the state of a JS-Intepreter.
+ * @author fraser@google.com (Neil Fraser)
+ */
+
+let deserialize = function(json, interpreter) {
+  function decodeValue(value) {
+    if (value && typeof value === 'object') {
+      var data;
+      if ((data = value['#'])) {
+       // Object reference: {'#': 42}
+       value = objectList[data];
+        if (!value) {
+          throw ReferenceError('Object reference not found: ' + data);
+        }
+        return value;
+      }
+      if ((data = value['Number'])) {
+        // Special number: {'Number': 'Infinity'}
+        return Number(data);
+      }
+      if ((data = value['Value'])) {
+        // Special value: {'Value': 'undefined'}
+        if (value['Value'] === 'undefined') {
+          return undefined;
+        }
+      }
+    }
+    return value;
+  }
+  var stack = interpreter.stateStack;
+  if (!Array.isArray(json)) {
+    throw TypeError('Top-level JSON is not a list.');
+  }
+  if (!stack.length) {
+    // Require native functions to be present.
+    throw Error('Interpreter must be initialized prior to deserialization.');
+  }
+  // Find all native functions in existing interpreter.
+  var objectList = [];
+  objectHunt_(stack, objectList);
+  var functionHash = Object.create(null);
+  for (var i = 0; i < objectList.length; i++) {
+    if (typeof objectList[i] == 'function') {
+      functionHash[objectList[i].id] = objectList[i];
+    }
+  }
+  // First pass: Create object stubs for every object.
+  objectList = [];
+  for (var i = 0; i < json.length; i++) {
+    var jsonObj = json[i];
+    var obj;
+    switch (jsonObj['type']) {
+      case 'Map':
+        obj = Object.create(null);
+        break;
+      case 'Object':
+        obj = {};
+        break;
+      case 'ScopeReference':
+        obj = Interpreter.SCOPE_REFERENCE;
+        break;
+      case 'Function':
+        obj = functionHash[jsonObj['id']];
+        if (!obj) {
+          throw RangeError('Function ID not found: ' + jsonObj['id']);
+        }
+        break;
+      case 'Array':
+        // Currently we assume that Arrays are not sparse.
+        obj = [];
+        break;
+      case 'Date':
+        obj = new Date(jsonObj['data']);
+        if (isNaN(obj)) {
+          throw TypeError('Invalid date: ' + jsonObj['data']);
+        }
+        break;
+      case 'RegExp':
+        obj = RegExp(jsonObj['source'], jsonObj['flags']);
+        break;
+      case 'PseudoObject':
+        obj = new Interpreter.Object(null);
+        break;
+      case 'State':
+        obj = new Interpreter.State(undefined, undefined);
+        break;
+      case 'Node':
+        obj = new interpreter.nodeConstructor();
+        break;
+      default:
+        throw TypeError('Unknown type: ' + jsonObj['type']);
+    }
+    objectList[i] = obj;
+  }
+  // Second pass: Populate properties for every object.
+  for (var i = 0; i < json.length; i++) {
+    var jsonObj = json[i];
+    var obj = objectList[i];
+    // Repopulate objects.
+    var props = jsonObj['props'];
+    if (props) {
+      var nonConfigurable = jsonObj['nonConfigurable'] || [];
+      var nonEnumerable = jsonObj['nonEnumerable'] || [];
+      var nonWritable = jsonObj['nonWritable'] || [];
+      var names = Object.getOwnPropertyNames(props);
+      for (var j = 0; j < names.length; j++) {
+        var name = names[j];
+        Object.defineProperty(obj, name,
+            {configurable: nonConfigurable.indexOf(name) === -1,
+             enumerable: nonEnumerable.indexOf(name) === -1,
+             writable: nonWritable.indexOf(name) === -1,
+             value: decodeValue(props[name])});
+      }
+    }
+    // Repopulate arrays.
+    if (Array.isArray(obj)) {
+      var data = jsonObj['data'];
+      if (data) {
+        for (var j = 0; j < data.length; j++) {
+          obj.push(decodeValue(data[j]));
+        }
+      }
+    }
+  }
+  // First object is the interpreter.
+  var root = objectList[0];
+  for (var prop in root) {
+    interpreter[prop] = root[prop];
+  }
+}
+
+let serialize = function(interpreter) {
+  function encodeValue(value) {
+    if (value && (typeof value === 'object' || typeof value === 'function')) {
+      var ref = objectList.indexOf(value);
+      if (ref === -1) {
+        throw RangeError('Object not found in table.');
+      }
+      return {'#': ref};
+    }
+    if (value === undefined) {
+      return {'Value': 'undefined'};
+    }
+    if (typeof value === 'number') {
+      if (value === Infinity) {
+        return {'Number': 'Infinity'};
+      } else if (value === -Infinity) {
+        return {'Number': '-Infinity'};
+      } else if (isNaN(value)) {
+        return {'Number': 'NaN'};
+      } else if (1 / value === -Infinity) {
+        return {'Number': '-0'};
+      }
+    }
+    return value;
+  }
+  // Shallow-copy all properties of interest onto a root object.
+  var properties = [
+    'OBJECT', 'OBJECT_PROTO',
+    'FUNCTION', 'FUNCTION_PROTO',
+    'ARRAY', 'ARRAY_PROTO',
+    'REGEXP', 'REGEXP_PROTO',
+    'BOOLEAN',
+    'DATE',
+    'NUMBER',
+    'STRING',
+    'ERROR',
+    'EVAL_ERROR',
+    'RANGE_ERROR',
+    'REFERENCE_ERROR',
+    'SYNTAX_ERROR',
+    'TYPE_ERROR',
+    'URI_ERROR',
+    'global',
+    'stateStack'
+  ];
+  var root = Object.create(null);
+  for (var i = 0; i < properties.length; i++) {
+    root[properties[i]] = interpreter[properties[i]];
+  }
+
+  // Find all objects.
+  var objectList = [];
+  objectHunt_(root, objectList);
+  // Serialize every object.
+  var json = [];
+  for (var i = 0; i < objectList.length; i++) {
+    var jsonObj = Object.create(null);
+    json.push(jsonObj);
+    var obj = objectList[i];
+    // Uncomment this line for a debugging label.
+    //jsonObj['#'] = i;
+    switch (Object.getPrototypeOf(obj)) {
+      case null:
+        jsonObj['type'] = 'Map';
+        break;
+      case Object.prototype:
+        if (obj === Interpreter.SCOPE_REFERENCE) {
+          jsonObj['type'] = 'ScopeReference';
+        } else {
+          jsonObj['type'] = 'Object';
+        }
+        break;
+      case Function.prototype:
+        jsonObj['type'] = 'Function';
+        jsonObj['id'] = obj.id;
+        if (obj.id === undefined) {
+          throw Error('Native function has no ID: ' + obj);
+        }
+        continue;  // No need to index properties.
+      case Array.prototype:
+        // Currently we assume that Arrays are not sparse.
+        jsonObj['type'] = 'Array';
+        if (obj.length) {
+          jsonObj['data'] = obj.map(encodeValue);
+        }
+        continue;  // No need to index properties.
+      case Date.prototype:
+        jsonObj['type'] = 'Date';
+        jsonObj['data'] = obj.toJSON();
+        continue;  // No need to index properties.
+      case RegExp.prototype:
+        jsonObj['type'] = 'RegExp';
+        jsonObj['source'] = obj.source;
+        jsonObj['flags'] = obj.flags;
+        continue;  // No need to index properties.
+      case Interpreter.Object.prototype:
+        jsonObj['type'] = 'PseudoObject';
+        break;
+      case Interpreter.State.prototype:
+        jsonObj['type'] = 'State';
+        break;
+      case interpreter.nodeConstructor.prototype:
+        jsonObj['type'] = 'Node';
+        break;
+      default:
+        throw TypeError('Unknown type: ' + obj);
+    }
+    var props = Object.create(null);
+    var nonConfigurable = [];
+    var nonEnumerable = [];
+    var nonWritable = [];
+    var names = Object.getOwnPropertyNames(obj);
+    for (var j = 0; j < names.length; j++) {
+      var name = names[j];
+      props[name] = encodeValue(obj[name]);
+      var descriptor = Object.getOwnPropertyDescriptor(obj, name);
+      if (!descriptor.configurable) {
+        nonConfigurable.push(name);
+      }
+      if (!descriptor.enumerable) {
+        nonEnumerable.push(name);
+      }
+      if (!descriptor.writable) {
+        nonWritable.push(name);
+      }
+    }
+    if (names.length) {
+      jsonObj['props'] = props;
+    }
+    if (nonConfigurable.length) {
+      jsonObj['nonConfigurable'] = nonConfigurable;
+    }
+    if (nonEnumerable.length) {
+      jsonObj['nonEnumerable'] = nonEnumerable;
+    }
+    if (nonWritable.length) {
+      jsonObj['nonWritable'] = nonWritable;
+    }
+  }
+  return json;
+}
+
+// Recursively search the stack to find all non-primitives.
+function objectHunt_(node, objectList) {
+  if (node && (typeof node === 'object' || typeof node === 'function')) {
+    if (objectList.indexOf(node) != -1) {
+      return;
+    }
+    objectList.push(node);
+    if (typeof node === 'object') {  // Recurse.
+      var names = Object.getOwnPropertyNames(node);
+      for (var i = 0; i < names.length; i++) {
+        objectHunt_(node[names[i]], objectList);
+      }
+    }
+  }
+}
+
+module.exports = Machine
