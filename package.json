@@ -32,6 +32,6 @@
     "watch": "^1.0.2"
   },
   "devDependencies": {
-    "@mrmakeit/cassini": "^0.1.8"
+    "@mrmakeit/cassini": "^0.1.9"
   }
 }
